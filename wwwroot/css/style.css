@@ -1,14 +1,25 @@
 ﻿body {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    height: 100vh;
-    margin: 0;
     background-color: #000;
-    color: #fff;
+    color: white;
     font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
 }
 
 canvas {
-    border: 2px solid #fff;
+    border: 2px solid white;
+}
+
+#nomeJogo {
+    margin-top: 10px;
+    font-size: 35px;
+    text-align: center;
+}
+#score {
+    margin-top: 10px;
+    font-size: 24px;
+    text-align: center;
 }

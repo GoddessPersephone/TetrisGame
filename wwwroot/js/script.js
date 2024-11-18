@@ -1,13 +1,14 @@
 ﻿const canvas = document.getElementById('tetris');
 const context = canvas.getContext('2d');
+const scoreElement = document.getElementById('score'); 
 
 context.scale(20, 20);
 
-function drawMatrix(matrix, offset) {
+function drawMatrix(matrix, offset, color) {
     matrix.forEach((row, y) => {
         row.forEach((value, x) => {
             if (value !== 0) {
-                context.fillStyle = 'red';
+                context.fillStyle = color;
                 context.fillRect(x + offset.x, y + offset.y, 1, 1);
             }
         });
@@ -46,49 +47,93 @@ function collide(arena, player) {
 }
 
 function clearLines() {
-    let rowCount = 1;
-    outer: for (let y = arena.length - 1; y >= 0; y--) {
+    let linesCleared = 0;
+    for (let y = arena.length - 1; y >= 0; y--) {
         if (arena[y].every(cell => cell !== 0)) {
-            arena.splice(y, 1); // Remove a linha completa
-            arena.unshift(new Array(arena[0].length).fill(0)); // Adiciona uma linha vazia no topo
-            y++; // Verifica a mesma linha novamente após o shift
-            rowCount++;
+            arena.splice(y, 1);
+            arena.unshift(new Array(arena[0].length).fill(0)); 
+            linesCleared++;
+            y++; 
         }
     }
+    updateScore(linesCleared);
+}
+
+function updateScore(linesCleared) {
+    const scorePerLine = [0, 40, 100, 300, 1200]; 
+    score += scorePerLine[linesCleared];
+    scoreElement.innerText = `Score: ${score}`; 
 }
 
 function draw() {
     context.fillStyle = '#000';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    drawMatrix(arena, { x: 0, y: 0 });
-    drawMatrix(player.matrix, player.pos);
+    drawMatrix(arena, { x: 0, y: 0 }, 'grey');
+    drawMatrix(player.matrix, player.pos, player.color);
 }
 
-function playerReset() {
-    const pieces = [
-        [
-            [0, 1, 0],
+function createPieces(type) {
+    const pieces = {
+        I: [
+            [0, 0, 0, 0],
+            [1, 1, 1, 1],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+        ],
+        J: [
+            [1, 0, 0],
             [1, 1, 1],
             [0, 0, 0],
         ],
-        [
-            [1, 1],
-            [1, 1],
-        ],
-        [
+        L: [
             [0, 0, 1],
             [1, 1, 1],
             [0, 0, 0],
         ],
-    ];
-    player.matrix = pieces[Math.floor(Math.random() * pieces.length)];
+        O: [
+            [1, 1],
+            [1, 1],
+        ],
+        S: [
+            [0, 1, 1],
+            [1, 1, 0],
+            [0, 0, 0],
+        ],
+        T: [
+            [0, 1, 0],
+            [1, 1, 1],
+            [0, 0, 0],
+        ],
+        Z: [
+            [1, 1, 0],
+            [0, 1, 1],
+            [0, 0, 0],
+        ],
+    };
+    return pieces[type];
+}
+
+function playerReset() {
+    const types = 'IJLOSTZ';
+    let nextType;
+
+    do {
+        nextType = types[Math.floor(Math.random() * types.length)];
+    } while (nextType === lastPiece);
+
+    lastPiece = nextType;
+
+    player.matrix = createPieces(nextType);
+    player.color = colors[nextType];
     player.pos.y = 0;
     player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
 
     if (collide(arena, player)) {
         arena.forEach(row => row.fill(0));
         alert("Game Over!");
+        score = 0; 
+        updateScore(0); 
     }
 }
 
@@ -97,7 +142,7 @@ function playerDrop() {
     if (collide(arena, player)) {
         player.pos.y--;
         merge(arena, player);
-        clearLines(); // Limpa as linhas completas
+        clearLines(); 
         playerReset();
     }
     dropCounter = 0;
@@ -118,7 +163,7 @@ function playerRotate() {
         player.pos.x += offset;
         offset = -(offset + (offset > 0 ? 1 : -1));
         if (offset > player.matrix[0].length) {
-            rotate(player.matrix, -1); // Desfaz a rotação
+            rotate(player.matrix, -1); 
             player.pos.x = pos;
             return;
         }
@@ -159,7 +204,21 @@ const arena = createMatrix(12, 20);
 const player = {
     pos: { x: 0, y: 0 },
     matrix: null,
+    color: null,
 };
+
+const colors = {
+    I: '#00FFFF', // Ciano
+    J: '#0000FF', // Azul
+    L: '#FF8000', // Laranja
+    O: '#FFFF00', // Amarelo
+    S: '#00FF00', // Verde
+    T: '#800080', // Roxo
+    Z: '#FF0000', // Vermelho
+};
+
+let lastPiece = null;
+let score = 0;
 
 document.addEventListener('keydown', event => {
     if (event.key === 'ArrowLeft') {
